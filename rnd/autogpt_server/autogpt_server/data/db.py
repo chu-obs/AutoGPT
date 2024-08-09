@@ -1,7 +1,15 @@
+import os
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
+from dotenv import load_dotenv
 from prisma import Prisma
 from pydantic import BaseModel, Field, field_validator
+
+load_dotenv()
+
+PRISMA_SCHEMA = os.getenv("PRISMA_SCHEMA", "schema.prisma")
+os.environ["PRISMA_SCHEMA_PATH"] = PRISMA_SCHEMA
 
 prisma = Prisma(auto_register=True)
 
@@ -14,6 +22,12 @@ async def connect():
 async def disconnect():
     if prisma.is_connected():
         await prisma.disconnect()
+
+
+@asynccontextmanager
+async def transaction():
+    async with prisma.tx() as tx:
+        yield tx
 
 
 class BaseDbModel(BaseModel):
